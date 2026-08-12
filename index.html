@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#1976d2">
+<title>ラベル在庫管理</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;padding:16px;font-family:sans-serif;background:#f4f6f8;color:#222}
+h1{font-size:24px;margin:4px 0 18px}
+.card{background:#fff;border-radius:14px;padding:16px;margin-bottom:14px;box-shadow:0 2px 8px #0001}
+h2{font-size:19px;margin:0 0 12px}
+label{display:block;font-weight:bold;margin:10px 0 6px}
+input{width:100%;padding:13px;border:1px solid #ccc;border-radius:9px;font-size:18px}
+button{border:0;border-radius:9px;padding:12px 16px;font-size:16px;font-weight:bold}
+.primary{width:100%;margin-top:12px;background:#1976d2;color:#fff}
+.result{display:flex;align-items:center;justify-content:space-between;gap:10px;border-top:1px solid #eee;padding:13px 0}
+.num{font-size:20px;font-weight:bold}.stock{margin-top:3px}
+.select{background:#e9eef5}.hint,.status{font-size:14px;color:#666;margin-top:9px}
+.status.ok{color:#16803c}.status.err{color:#c62828}
+</style>
+</head>
+<body>
+<h1>🏷️ ラベル在庫管理</h1>
+
+<div class="card">
+<h2>ラベル登録</h2>
+<label>ラベル番号</label>
+<input id="labelNo" placeholder="例：25-1" autocomplete="off">
+<label>個数</label>
+<input id="qty" type="number" min="1" inputmode="numeric" placeholder="例：5">
+<button class="primary" onclick="registerLabel()">登録する</button>
+<div id="registerStatus" class="status"></div>
+</div>
+
+<div class="card">
+<h2>ラベル検索</h2>
+<input id="search" placeholder="例：25-1 または 25" autocomplete="off" oninput="searchLabels()">
+<div class="hint">候補をタップすると、そのラベルを選択できます。</div>
+<div id="results"></div>
+</div>
+
+<div class="card" id="selectedCard" hidden>
+<h2>選択中のラベル</h2>
+<div id="selected"></div>
+</div>
+
+<script>
+/*
+  ここにSupabaseのURLとAnon Keyを入れるとデータベース版になります。
+  今は接続前でも動作確認できるよう、ブラウザ保存を使います。
+*/
+const SUPABASE_URL = "";
+const SUPABASE_ANON_KEY = "";
+
+let labels = JSON.parse(localStorage.getItem("labelStock") || "[]");
+
+function save(){localStorage.setItem("labelStock",JSON.stringify(labels));}
+
+function registerLabel(){
+  const no=document.getElementById("labelNo").value.trim();
+  const qty=Number(document.getElementById("qty").value);
+  const status=document.getElementById("registerStatus");
+
+  if(!no){return setStatus("ラベル番号を入力してください。",true);}
+  if(!Number.isInteger(qty)||qty<1){return setStatus("個数を1以上で入力してください。",true);}
+
+  const item=labels.find(x=>x.label_no===no);
+  if(item){item.stock+=qty;}
+  else{labels.push({label_no:no,stock:qty});}
+  labels.sort((a,b)=>a.label_no.localeCompare(b.label_no,undefined,{numeric:true}));
+  save();
+
+  setStatus(`${no} を ${qty}個 登録しました。`,false);
+  document.getElementById("labelNo").value="";
+  document.getElementById("qty").value="";
+  searchLabels();
+}
+
+function searchLabels(){
+  const q=document.getElementById("search").value.trim().toLowerCase();
+  const box=document.getElementById("results");
+  box.innerHTML="";
+  if(!q)return;
+
+  const found=labels.filter(x=>x.label_no.toLowerCase().includes(q)).slice(0,50);
+  if(!found.length){
+    box.innerHTML='<div class="status">該当するラベルはありません。</div>';
+    return;
+  }
+
+  found.forEach(x=>{
+    const row=document.createElement("div");
+    row.className="result";
+    row.innerHTML=`<div><div class="num">${escapeHtml(x.label_no)}</div><div class="stock">在庫：${x.stock}個</div></div><button class="select">選択</button>`;
+    row.querySelector("button").onclick=()=>selectLabel(x.label_no);
+    box.appendChild(row);
+  });
+}
+
+function selectLabel(no){
+  const item=labels.find(x=>x.label_no===no);
+  if(!item)return;
+  document.getElementById("selectedCard").hidden=false;
+  document.getElementById("selected").innerHTML=
+    `<div class="num">${escapeHtml(item.label_no)}</div><div class="stock">現在庫：<b>${item.stock}個</b></div>`;
+}
+
+function setStatus(text,error){
+  const el=document.getElementById("registerStatus");
+  el.textContent=text;
+  el.className="status "+(error?"err":"ok");
+}
+
+function escapeHtml(s){
+  return s.replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[c]));
+}
+</script>
+</body>
+</html>
