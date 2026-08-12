@@ -159,6 +159,16 @@ button{
     margin-top:5px;
 }
 
+.history-in{
+    color:#1976d2;
+    font-weight:bold;
+}
+
+.history-out{
+    color:#d32f2f;
+    font-weight:bold;
+}
+
 .clear-history{
     width:100%;
     margin-top:20px;
@@ -272,7 +282,7 @@ button{
     class="use-btn"
     onclick="useLabels()"
 >
-使用する
+出庫する
 </button>
 
 <div id="useMessage" class="message"></div>
@@ -283,12 +293,12 @@ button{
 
 
 <!-- =========================
-     使用履歴
+     入出庫履歴
 ========================= -->
 
 <div class="card">
 
-<h2>使用履歴</h2>
+<h2>入出庫履歴</h2>
 
 <div id="historyList"></div>
 
@@ -317,6 +327,28 @@ let history = JSON.parse(
 );
 
 let selectedLabel = null;
+
+
+/* =========================
+   日時を作る
+========================= */
+
+function getDateTime(){
+
+    const now = new Date();
+
+    return (
+        now.getFullYear()
+        + "/"
+        + String(now.getMonth() + 1).padStart(2,"0")
+        + "/"
+        + String(now.getDate()).padStart(2,"0")
+        + " "
+        + String(now.getHours()).padStart(2,"0")
+        + ":"
+        + String(now.getMinutes()).padStart(2,"0")
+    );
+}
 
 
 /* =========================
@@ -364,6 +396,9 @@ function registerLabel(){
         return;
     }
 
+
+    /* 在庫を追加 */
+
     if(labels[number]){
 
         labels[number] += count;
@@ -374,16 +409,36 @@ function registerLabel(){
 
     }
 
+
+    /* =========================
+       入庫履歴を追加
+    ========================= */
+
+    history.unshift({
+
+        date: getDateTime(),
+
+        label: number,
+
+        type: "入庫",
+
+        count: count
+
+    });
+
+
     saveData();
 
+
     message.textContent =
-        number +
-        " を " +
-        count +
-        "個 登録しました。";
+        number
+        + " を "
+        + count
+        + "個 入庫しました。";
 
     message.className =
         "message success";
+
 
     document
         .getElementById("labelNumber")
@@ -393,7 +448,10 @@ function registerLabel(){
         .getElementById("labelCount")
         .value = "";
 
+
     searchLabels();
+
+    showHistory();
 }
 
 
@@ -428,6 +486,7 @@ function searchLabels(){
                 );
 
         });
+
 
     filtered.forEach(function(key){
 
@@ -507,7 +566,7 @@ function selectLabel(number){
 
 
 /* =========================
-   ラベル使用
+   ラベル出庫
 ========================= */
 
 function useLabels(){
@@ -515,6 +574,7 @@ function useLabels(){
     if(!selectedLabel){
         return;
     }
+
 
     const count =
         Number(
@@ -557,43 +617,25 @@ function useLabels(){
     }
 
 
-    /* 在庫を減らす */
+    /* =========================
+       在庫を減らす
+    ========================= */
 
     labels[selectedLabel] =
         currentStock - count;
 
 
     /* =========================
-       使用履歴を追加
+       出庫履歴を追加
     ========================= */
-
-    const now = new Date();
-
-    const date =
-        now.getFullYear()
-        + "/"
-        + String(
-            now.getMonth() + 1
-        ).padStart(2,"0")
-        + "/"
-        + String(
-            now.getDate()
-        ).padStart(2,"0")
-        + " "
-        + String(
-            now.getHours()
-        ).padStart(2,"0")
-        + ":"
-        + String(
-            now.getMinutes()
-        ).padStart(2,"0");
-
 
     history.unshift({
 
-        date: date,
+        date: getDateTime(),
 
         label: selectedLabel,
+
+        type: "出庫",
 
         count: count
 
@@ -629,7 +671,7 @@ function useLabels(){
         selectedLabel
         + " を "
         + count
-        + "個 使用しました。";
+        + "個 出庫しました。";
 
     message.className =
         "message success";
@@ -667,7 +709,7 @@ function saveData(){
 
 
 /* =========================
-   使用履歴表示
+   入出庫履歴表示
 ========================= */
 
 function showHistory(){
@@ -683,7 +725,7 @@ function showHistory(){
     if(history.length === 0){
 
         list.innerHTML =
-            '<div class="empty-history">使用履歴はありません。</div>';
+            '<div class="empty-history">入出庫履歴はありません。</div>';
 
         return;
     }
@@ -697,6 +739,13 @@ function showHistory(){
         div.className =
             "history-item";
 
+
+        const typeClass =
+            item.type === "入庫"
+            ? "history-in"
+            : "history-out";
+
+
         div.innerHTML = `
 
             <div class="history-date">
@@ -707,8 +756,8 @@ function showHistory(){
                 ラベル：${item.label}
             </div>
 
-            <div class="history-count">
-                使用数：${item.count}個
+            <div class="history-count ${typeClass}">
+                ${item.type}：${item.count}個
             </div>
 
         `;
@@ -733,7 +782,7 @@ function clearHistory(){
 
     const result =
         confirm(
-            "使用履歴をすべて削除しますか？"
+            "入出庫履歴をすべて削除しますか？"
         );
 
 
