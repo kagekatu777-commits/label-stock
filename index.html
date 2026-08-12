@@ -84,7 +84,16 @@ button{
 .message{
     margin-top:18px;
     font-size:20px;
+}
+
+.success{
     color:#2e7d32;
+    font-weight:bold;
+}
+
+.warning{
+    color:#d32f2f;
+    font-weight:bold;
 }
 
 .search-note{
@@ -129,14 +138,38 @@ button{
     display:none;
 }
 
-.warning{
-    color:#d32f2f;
+.history-item{
+    border-top:1px solid #ddd;
+    padding:18px 0;
+}
+
+.history-date{
+    color:#777;
+    font-size:16px;
+    margin-bottom:5px;
+}
+
+.history-label{
+    font-size:22px;
     font-weight:bold;
 }
 
-.success{
-    color:#2e7d32;
-    font-weight:bold;
+.history-count{
+    font-size:20px;
+    margin-top:5px;
+}
+
+.clear-history{
+    width:100%;
+    margin-top:20px;
+    background:#e53935;
+    color:white;
+    font-size:18px;
+}
+
+.empty-history{
+    color:#777;
+    font-size:18px;
 }
 </style>
 </head>
@@ -145,12 +178,17 @@ button{
 
 <h1>ラベル在庫管理</h1>
 
-<!-- 登録 -->
+
+<!-- =========================
+     ラベル登録
+========================= -->
+
 <div class="card">
 
 <h2>ラベル登録</h2>
 
 <label>ラベル番号</label>
+
 <input
     type="text"
     id="labelNumber"
@@ -158,6 +196,7 @@ button{
 >
 
 <label>個数</label>
+
 <input
     type="number"
     id="labelCount"
@@ -177,7 +216,10 @@ button{
 </div>
 
 
-<!-- 検索 -->
+<!-- =========================
+     ラベル検索
+========================= -->
+
 <div class="card">
 
 <h2>ラベル検索</h2>
@@ -198,11 +240,11 @@ button{
 </div>
 
 
-<!-- 選択中 -->
-<div
-    class="card"
-    id="selectedCard"
->
+<!-- =========================
+     選択中のラベル
+========================= -->
+
+<div class="card">
 
 <h2>選択中のラベル</h2>
 
@@ -240,17 +282,45 @@ button{
 </div>
 
 
+<!-- =========================
+     使用履歴
+========================= -->
+
+<div class="card">
+
+<h2>使用履歴</h2>
+
+<div id="historyList"></div>
+
+<button
+    class="clear-history"
+    onclick="clearHistory()"
+>
+履歴をすべて削除
+</button>
+
+</div>
+
+
 <script>
+
+/* =========================
+   データ読み込み
+========================= */
 
 let labels = JSON.parse(
     localStorage.getItem("labelInventory") || "{}"
+);
+
+let history = JSON.parse(
+    localStorage.getItem("labelHistory") || "[]"
 );
 
 let selectedLabel = null;
 
 
 /* =========================
-   登録
+   ラベル登録
 ========================= */
 
 function registerLabel(){
@@ -273,31 +343,44 @@ function registerLabel(){
         .getElementById("registerMessage");
 
     if(!number){
+
         message.textContent =
             "ラベル番号を入力してください。";
+
         message.className =
             "message warning";
+
         return;
     }
 
     if(!count || count <= 0){
+
         message.textContent =
             "個数を入力してください。";
+
         message.className =
             "message warning";
+
         return;
     }
 
     if(labels[number]){
+
         labels[number] += count;
+
     }else{
+
         labels[number] = count;
+
     }
 
     saveData();
 
     message.textContent =
-        number + " を " + count + "個 登録しました。";
+        number +
+        " を " +
+        count +
+        "個 登録しました。";
 
     message.className =
         "message success";
@@ -315,7 +398,7 @@ function registerLabel(){
 
 
 /* =========================
-   検索
+   ラベル検索
 ========================= */
 
 function searchLabels(){
@@ -340,7 +423,9 @@ function searchLabels(){
 
             return key
                 .toLowerCase()
-                .includes(keyword.toLowerCase());
+                .includes(
+                    keyword.toLowerCase()
+                );
 
         });
 
@@ -388,7 +473,9 @@ function selectLabel(number){
     selectedLabel = number;
 
     const area =
-        document.getElementById("selectedLabel");
+        document.getElementById(
+            "selectedLabel"
+        );
 
     area.innerHTML = `
         <div class="selected-name">
@@ -403,4 +490,276 @@ function selectLabel(number){
 
     document
         .getElementById("useArea")
-        .class
+        .classList.remove("hidden");
+
+    document
+        .getElementById("useCount")
+        .value = "";
+
+    document
+        .getElementById("useMessage")
+        .textContent = "";
+
+    document
+        .getElementById("useCount")
+        .focus();
+}
+
+
+/* =========================
+   ラベル使用
+========================= */
+
+function useLabels(){
+
+    if(!selectedLabel){
+        return;
+    }
+
+    const count =
+        Number(
+            document
+            .getElementById("useCount")
+            .value
+        );
+
+    const message =
+        document
+        .getElementById("useMessage");
+
+    const currentStock =
+        labels[selectedLabel];
+
+
+    if(!count || count <= 0){
+
+        message.textContent =
+            "使用する個数を入力してください。";
+
+        message.className =
+            "message warning";
+
+        return;
+    }
+
+
+    if(count > currentStock){
+
+        message.textContent =
+            "在庫が足りません。現在庫は "
+            + currentStock
+            + "個です。";
+
+        message.className =
+            "message warning";
+
+        return;
+    }
+
+
+    /* 在庫を減らす */
+
+    labels[selectedLabel] =
+        currentStock - count;
+
+
+    /* =========================
+       使用履歴を追加
+    ========================= */
+
+    const now = new Date();
+
+    const date =
+        now.getFullYear()
+        + "/"
+        + String(
+            now.getMonth() + 1
+        ).padStart(2,"0")
+        + "/"
+        + String(
+            now.getDate()
+        ).padStart(2,"0")
+        + " "
+        + String(
+            now.getHours()
+        ).padStart(2,"0")
+        + ":"
+        + String(
+            now.getMinutes()
+        ).padStart(2,"0");
+
+
+    history.unshift({
+
+        date: date,
+
+        label: selectedLabel,
+
+        count: count
+
+    });
+
+
+    saveData();
+
+
+    /* =========================
+       表示更新
+    ========================= */
+
+    document
+        .getElementById("selectedLabel")
+        .innerHTML = `
+
+            <div class="selected-name">
+                ${selectedLabel}
+            </div>
+
+            <div class="selected-stock">
+                現在庫：
+                <strong>
+                    ${labels[selectedLabel]}個
+                </strong>
+            </div>
+
+        `;
+
+
+    message.textContent =
+        selectedLabel
+        + " を "
+        + count
+        + "個 使用しました。";
+
+    message.className =
+        "message success";
+
+
+    document
+        .getElementById("useCount")
+        .value = "";
+
+
+    searchLabels();
+
+    showHistory();
+
+}
+
+
+/* =========================
+   データ保存
+========================= */
+
+function saveData(){
+
+    localStorage.setItem(
+        "labelInventory",
+        JSON.stringify(labels)
+    );
+
+    localStorage.setItem(
+        "labelHistory",
+        JSON.stringify(history)
+    );
+
+}
+
+
+/* =========================
+   使用履歴表示
+========================= */
+
+function showHistory(){
+
+    const list =
+        document.getElementById(
+            "historyList"
+        );
+
+    list.innerHTML = "";
+
+
+    if(history.length === 0){
+
+        list.innerHTML =
+            '<div class="empty-history">使用履歴はありません。</div>';
+
+        return;
+    }
+
+
+    history.forEach(function(item){
+
+        const div =
+            document.createElement("div");
+
+        div.className =
+            "history-item";
+
+        div.innerHTML = `
+
+            <div class="history-date">
+                ${item.date}
+            </div>
+
+            <div class="history-label">
+                ラベル：${item.label}
+            </div>
+
+            <div class="history-count">
+                使用数：${item.count}個
+            </div>
+
+        `;
+
+        list.appendChild(div);
+
+    });
+
+}
+
+
+/* =========================
+   履歴削除
+========================= */
+
+function clearHistory(){
+
+    if(history.length === 0){
+        return;
+    }
+
+
+    const result =
+        confirm(
+            "使用履歴をすべて削除しますか？"
+        );
+
+
+    if(!result){
+        return;
+    }
+
+
+    history = [];
+
+    saveData();
+
+    showHistory();
+
+}
+
+
+/* =========================
+   起動時
+========================= */
+
+searchLabels();
+
+showHistory();
+
+</script>
+
+</body>
+</html>
