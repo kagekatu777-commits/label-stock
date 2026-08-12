@@ -138,6 +138,47 @@ button{
     display:none;
 }
 
+
+/* =========================
+   現在庫一覧
+========================= */
+
+.inventory-item{
+    border-top:1px solid #ddd;
+    padding:20px 0;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+}
+
+.inventory-label{
+    font-size:25px;
+    font-weight:bold;
+}
+
+.inventory-stock{
+    font-size:24px;
+    font-weight:bold;
+}
+
+.stock-ok{
+    color:#1976d2;
+}
+
+.stock-zero{
+    color:#d32f2f;
+}
+
+.empty-inventory{
+    color:#777;
+    font-size:18px;
+}
+
+
+/* =========================
+   履歴
+========================= */
+
 .history-item{
     border-top:1px solid #ddd;
     padding:18px 0;
@@ -181,6 +222,7 @@ button{
     color:#777;
     font-size:18px;
 }
+
 </style>
 </head>
 
@@ -246,6 +288,19 @@ button{
 </div>
 
 <div id="searchResults"></div>
+
+</div>
+
+
+<!-- =========================
+     現在庫一覧
+========================= -->
+
+<div class="card">
+
+<h2>現在庫一覧</h2>
+
+<div id="inventoryList"></div>
 
 </div>
 
@@ -374,6 +429,7 @@ function registerLabel(){
         document
         .getElementById("registerMessage");
 
+
     if(!number){
 
         message.textContent =
@@ -384,6 +440,7 @@ function registerLabel(){
 
         return;
     }
+
 
     if(!count || count <= 0){
 
@@ -410,19 +467,17 @@ function registerLabel(){
     }
 
 
-    /* =========================
-       入庫履歴を追加
-    ========================= */
+    /* 入庫履歴 */
 
     history.unshift({
 
-        date: getDateTime(),
+        date:getDateTime(),
 
-        label: number,
+        label:number,
 
-        type: "入庫",
+        type:"入庫",
 
-        count: count
+        count:count
 
     });
 
@@ -451,7 +506,10 @@ function registerLabel(){
 
     searchLabels();
 
+    showInventory();
+
     showHistory();
+
 }
 
 
@@ -473,8 +531,10 @@ function searchLabels(){
 
     results.innerHTML = "";
 
+
     const keys =
         Object.keys(labels);
+
 
     const filtered =
         keys.filter(function(key){
@@ -495,7 +555,9 @@ function searchLabels(){
 
         div.className = "result";
 
+
         div.innerHTML = `
+
             <div class="result-info">
 
                 <div class="label-name">
@@ -514,9 +576,78 @@ function searchLabels(){
             >
                 選択
             </button>
+
         `;
 
+
         results.appendChild(div);
+
+    });
+
+}
+
+
+/* =========================
+   現在庫一覧
+========================= */
+
+function showInventory(){
+
+    const list =
+        document.getElementById(
+            "inventoryList"
+        );
+
+
+    list.innerHTML = "";
+
+
+    const keys =
+        Object.keys(labels);
+
+
+    if(keys.length === 0){
+
+        list.innerHTML =
+            '<div class="empty-inventory">登録されているラベルはありません。</div>';
+
+        return;
+    }
+
+
+    keys.forEach(function(key){
+
+        const stock =
+            labels[key];
+
+
+        const div =
+            document.createElement("div");
+
+        div.className =
+            "inventory-item";
+
+
+        const stockClass =
+            stock === 0
+            ? "stock-zero"
+            : "stock-ok";
+
+
+        div.innerHTML = `
+
+            <div class="inventory-label">
+                ラベル：${key}
+            </div>
+
+            <div class="inventory-stock ${stockClass}">
+                ${stock}個
+            </div>
+
+        `;
+
+
+        list.appendChild(div);
 
     });
 
@@ -531,37 +662,48 @@ function selectLabel(number){
 
     selectedLabel = number;
 
+
     const area =
         document.getElementById(
             "selectedLabel"
         );
 
+
     area.innerHTML = `
+
         <div class="selected-name">
             ${number}
         </div>
 
         <div class="selected-stock">
             現在庫：
-            <strong>${labels[number]}個</strong>
+            <strong>
+                ${labels[number]}個
+            </strong>
         </div>
+
     `;
+
 
     document
         .getElementById("useArea")
         .classList.remove("hidden");
 
+
     document
         .getElementById("useCount")
         .value = "";
+
 
     document
         .getElementById("useMessage")
         .textContent = "";
 
+
     document
         .getElementById("useCount")
         .focus();
+
 }
 
 
@@ -583,9 +725,11 @@ function useLabels(){
             .value
         );
 
+
     const message =
         document
         .getElementById("useMessage");
+
 
     const currentStock =
         labels[selectedLabel];
@@ -617,27 +761,23 @@ function useLabels(){
     }
 
 
-    /* =========================
-       在庫を減らす
-    ========================= */
+    /* 在庫を減らす */
 
     labels[selectedLabel] =
         currentStock - count;
 
 
-    /* =========================
-       出庫履歴を追加
-    ========================= */
+    /* 出庫履歴 */
 
     history.unshift({
 
-        date: getDateTime(),
+        date:getDateTime(),
 
-        label: selectedLabel,
+        label:selectedLabel,
 
-        type: "出庫",
+        type:"出庫",
 
-        count: count
+        count:count
 
     });
 
@@ -645,9 +785,7 @@ function useLabels(){
     saveData();
 
 
-    /* =========================
-       表示更新
-    ========================= */
+    /* 選択中ラベル更新 */
 
     document
         .getElementById("selectedLabel")
@@ -673,6 +811,7 @@ function useLabels(){
         + count
         + "個 出庫しました。";
 
+
     message.className =
         "message success";
 
@@ -683,6 +822,8 @@ function useLabels(){
 
 
     searchLabels();
+
+    showInventory();
 
     showHistory();
 
@@ -718,6 +859,7 @@ function showHistory(){
         document.getElementById(
             "historyList"
         );
+
 
     list.innerHTML = "";
 
@@ -762,6 +904,7 @@ function showHistory(){
 
         `;
 
+
         list.appendChild(div);
 
     });
@@ -805,6 +948,8 @@ function clearHistory(){
 ========================= */
 
 searchLabels();
+
+showInventory();
 
 showHistory();
 
