@@ -650,6 +650,85 @@ function getDateTime(){
 
 
 /* =========================
+   ラベル番号の並べ替え
+========================= */
+
+function compareLabelNumbers(a, b){
+
+    /*
+       例：
+
+       8-2
+       18-2
+       28-2
+
+       のような番号を
+       「文字」ではなく「数字」として比較する。
+    */
+
+    const aParts = a.split("-");
+    const bParts = b.split("-");
+
+
+    const aFirst = Number(aParts[0]);
+    const bFirst = Number(bParts[0]);
+
+
+    if(
+        !Number.isNaN(aFirst) &&
+        !Number.isNaN(bFirst)
+    ){
+
+        if(aFirst !== bFirst){
+
+            return aFirst - bFirst;
+
+        }
+
+    }
+
+
+    /*
+       最初の数字が同じ場合は
+       ハイフン後の数字で比較
+    */
+
+    const aSecond = Number(aParts[1]);
+    const bSecond = Number(bParts[1]);
+
+
+    if(
+        !Number.isNaN(aSecond) &&
+        !Number.isNaN(bSecond)
+    ){
+
+        if(aSecond !== bSecond){
+
+            return aSecond - bSecond;
+
+        }
+
+    }
+
+
+    /*
+       数字として判断できない場合は
+       通常の文字順
+    */
+
+    return a.localeCompare(
+        b,
+        "ja",
+        {
+            numeric:true,
+            sensitivity:"base"
+        }
+    );
+
+}
+
+
+/* =========================
    登録
 ========================= */
 
@@ -917,7 +996,7 @@ function showInventory(){
     list.innerHTML = "";
 
 
-    const keys =
+    let keys =
         Object.keys(labels);
 
 
@@ -929,6 +1008,70 @@ function showInventory(){
         return;
 
     }
+
+
+    /*
+       ★ここでラベル番号を
+       数字の若い順に並べ替える
+    */
+
+    keys.sort(function(a, b){
+
+        const aParts =
+            a.split("___");
+
+        const bParts =
+            b.split("___");
+
+
+        const aNumber =
+            aParts[0];
+
+        const bNumber =
+            bParts[0];
+
+
+        const numberResult =
+            compareLabelNumbers(
+                aNumber,
+                bNumber
+            );
+
+
+        if(numberResult !== 0){
+
+            return numberResult;
+
+        }
+
+
+        /*
+           同じラベル番号の場合は
+           男 → 女 の順番
+        */
+
+        const aGender =
+            aParts[1];
+
+        const bGender =
+            bParts[1];
+
+
+        if(aGender === bGender){
+
+            return 0;
+
+        }
+
+        if(aGender === "男"){
+
+            return -1;
+
+        }
+
+        return 1;
+
+    });
 
 
     keys.forEach(function(key){
