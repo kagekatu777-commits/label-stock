@@ -329,7 +329,9 @@ button{
 <h1>ラベル在庫管理</h1>
 
 
-<!-- ラベル登録 -->
+<!-- =========================
+     ラベル登録
+========================= -->
 
 <div class="card">
 
@@ -388,7 +390,9 @@ button{
 </div>
 
 
-<!-- ラベル検索 -->
+<!-- =========================
+     ラベル検索
+========================= -->
 
 <div class="card">
 
@@ -402,7 +406,9 @@ button{
 >
 
 <div class="search-note">
-候補をタップすると、そのラベルを選択できます。
+ラベル番号を入力してください。
+<br>
+完全一致するラベルがあれば、それを優先して表示します。
 </div>
 
 <div id="searchResults"></div>
@@ -410,7 +416,9 @@ button{
 </div>
 
 
-<!-- 現在庫一覧 -->
+<!-- =========================
+     現在庫一覧
+========================= -->
 
 <div class="card">
 
@@ -437,7 +445,9 @@ button{
 </div>
 
 
-<!-- 選択中 -->
+<!-- =========================
+     選択中
+========================= -->
 
 <div class="card">
 
@@ -477,7 +487,9 @@ button{
 </div>
 
 
-<!-- 履歴 -->
+<!-- =========================
+     履歴
+========================= -->
 
 <div class="card">
 
@@ -695,7 +707,7 @@ function registerLabel(){
 
 
 /* =========================
-   検索
+   ラベル検索
 ========================= */
 
 function searchLabels(){
@@ -725,7 +737,11 @@ function searchLabels(){
         Object.keys(labels);
 
 
-    const filtered =
+    /*
+       ラベル番号だけ取り出して比較
+    */
+
+    const exactMatches =
         keys.filter(function(key){
 
             const parts =
@@ -734,13 +750,48 @@ function searchLabels(){
             const number =
                 parts[0];
 
-            return number
-                .toLowerCase()
-                .includes(
-                    keyword.toLowerCase()
-                );
+            return number === keyword;
 
         });
+
+
+    /*
+       完全一致があれば
+       完全一致だけ表示
+    */
+
+    let filtered;
+
+
+    if(exactMatches.length > 0){
+
+        filtered = exactMatches;
+
+    }else{
+
+        /*
+           完全一致がなければ
+           今まで通り部分一致
+        */
+
+        filtered =
+            keys.filter(function(key){
+
+                const parts =
+                    key.split("___");
+
+                const number =
+                    parts[0];
+
+                return number
+                    .toLowerCase()
+                    .includes(
+                        keyword.toLowerCase()
+                    );
+
+            });
+
+    }
 
 
     filtered.forEach(function(key){
@@ -915,7 +966,12 @@ function deleteLabel(number, gender){
         getKey(number, gender);
 
 
-    if(!Object.prototype.hasOwnProperty.call(labels,key)){
+    if(
+        !Object.prototype.hasOwnProperty.call(
+            labels,
+            key
+        )
+    ){
 
         return;
 
@@ -1253,7 +1309,7 @@ function saveData(){
 
 
 /* =========================
-   履歴表示
+   履歴
 ========================= */
 
 function showHistory(){
