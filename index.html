@@ -143,6 +143,16 @@ button{
    現在庫一覧
 ========================= */
 
+.inventory-toggle{
+    width:100%;
+    background:#607d8b;
+    color:white;
+}
+
+.inventory-toggle.open{
+    background:#455a64;
+}
+
 .inventory-item{
     border-top:1px solid #ddd;
     padding:20px 0;
@@ -176,7 +186,7 @@ button{
 
 
 /* =========================
-   履歴
+   入出庫履歴
 ========================= */
 
 .history-item{
@@ -298,9 +308,26 @@ button{
 
 <div class="card">
 
+<button
+    class="inventory-toggle"
+    onclick="toggleInventory()"
+    id="inventoryButton"
+>
+📦 現在庫一覧を見る
+</button>
+
+
+<div
+    id="inventoryArea"
+    class="hidden"
+    style="margin-top:25px;"
+>
+
 <h2>現在庫一覧</h2>
 
 <div id="inventoryList"></div>
+
+</div>
 
 </div>
 
@@ -588,7 +615,7 @@ function searchLabels(){
 
 
 /* =========================
-   現在庫一覧
+   現在庫一覧表示
 ========================= */
 
 function showInventory(){
@@ -650,6 +677,46 @@ function showInventory(){
         list.appendChild(div);
 
     });
+
+}
+
+
+/* =========================
+   現在庫一覧の開閉
+========================= */
+
+function toggleInventory(){
+
+    const area =
+        document.getElementById(
+            "inventoryArea"
+        );
+
+    const button =
+        document.getElementById(
+            "inventoryButton"
+        );
+
+
+    if(area.classList.contains("hidden")){
+
+        area.classList.remove("hidden");
+
+        button.classList.add("open");
+
+        button.textContent =
+            "📦 現在庫一覧を閉じる";
+
+    }else{
+
+        area.classList.add("hidden");
+
+        button.classList.remove("open");
+
+        button.textContent =
+            "📦 現在庫一覧を見る";
+
+    }
 
 }
 
