@@ -81,6 +81,14 @@ button{
     padding:15px 25px;
 }
 
+.delete-btn{
+    background:#e53935;
+    color:white;
+    padding:14px 20px;
+    margin-left:12px;
+    font-size:19px;
+}
+
 .message{
     margin-top:18px;
     font-size:20px;
@@ -159,16 +167,30 @@ button{
     display:flex;
     justify-content:space-between;
     align-items:center;
+    gap:10px;
+}
+
+.inventory-info{
+    flex:1;
+    min-width:0;
 }
 
 .inventory-label{
     font-size:25px;
     font-weight:bold;
+    word-break:break-all;
 }
 
 .inventory-stock{
     font-size:24px;
     font-weight:bold;
+    margin-top:5px;
+}
+
+.inventory-actions{
+    display:flex;
+    align-items:center;
+    flex-shrink:0;
 }
 
 .stock-ok{
@@ -231,6 +253,33 @@ button{
 .empty-history{
     color:#777;
     font-size:18px;
+}
+
+
+/* =========================
+   スマホ用
+========================= */
+
+@media(max-width:500px){
+
+    .inventory-item{
+        align-items:center;
+    }
+
+    .inventory-label{
+        font-size:22px;
+    }
+
+    .inventory-stock{
+        font-size:20px;
+    }
+
+    .delete-btn{
+        padding:12px 15px;
+        font-size:17px;
+        margin-left:5px;
+    }
+
 }
 
 </style>
@@ -559,15 +608,8 @@ function searchLabels(){
         .getElementById("searchResults");
 
 
-    /* 一旦クリア */
-
     results.innerHTML = "";
 
-
-    /*
-       検索欄が空なら
-       ラベルを一切表示しない
-    */
 
     if(keyword === ""){
 
@@ -629,8 +671,6 @@ function searchLabels(){
 
     });
 
-
-    /* 該当なし */
 
     if(filtered.length === 0){
 
@@ -697,12 +737,27 @@ function showInventory(){
 
         div.innerHTML = `
 
-            <div class="inventory-label">
-                ラベル：${key}
+            <div class="inventory-info">
+
+                <div class="inventory-label">
+                    ラベル：${key}
+                </div>
+
+                <div class="inventory-stock ${stockClass}">
+                    在庫：${stock}個
+                </div>
+
             </div>
 
-            <div class="inventory-stock ${stockClass}">
-                ${stock}個
+            <div class="inventory-actions">
+
+                <button
+                    class="delete-btn"
+                    onclick="deleteLabel('${key}')"
+                >
+                    🗑️ 削除
+                </button>
+
             </div>
 
         `;
@@ -711,6 +766,108 @@ function showInventory(){
         list.appendChild(div);
 
     });
+
+}
+
+
+/* =========================
+   在庫削除
+========================= */
+
+function deleteLabel(number){
+
+    /* 本当に存在するか確認 */
+
+    if(!Object.prototype.hasOwnProperty.call(labels, number)){
+
+        return;
+
+    }
+
+
+    const stock =
+        labels[number];
+
+
+    /* 削除確認 */
+
+    const result =
+        confirm(
+            "ラベル「"
+            + number
+            + "」を削除しますか？\n\n"
+            + "現在庫："
+            + stock
+            + "個\n\n"
+            + "※この操作は取り消せません。"
+        );
+
+
+    if(!result){
+
+        return;
+
+    }
+
+
+    /* 在庫から削除 */
+
+    delete labels[number];
+
+
+    /*
+       削除したラベルが
+       現在選択中だった場合
+       選択状態も解除
+    */
+
+    if(selectedLabel === number){
+
+        selectedLabel = null;
+
+
+        document
+            .getElementById("selectedLabel")
+            .textContent =
+                "ラベルを選択してください。";
+
+
+        document
+            .getElementById("useArea")
+            .classList.add("hidden");
+
+    }
+
+
+    /* 保存 */
+
+    saveData();
+
+
+    /* 画面更新 */
+
+    showInventory();
+
+    searchLabels();
+
+
+    /*
+       削除完了メッセージ
+    */
+
+    const message =
+        document.getElementById(
+            "registerMessage"
+        );
+
+
+    message.textContent =
+        "ラベル「"
+        + number
+        + "」を削除しました。";
+
+    message.className =
+        "message success";
 
 }
 
@@ -1058,11 +1215,6 @@ function clearHistory(){
 /* =========================
    起動時
 ========================= */
-
-/*
-   searchLabels() は
-   検索欄が空なら何も表示しない。
-*/
 
 searchLabels();
 
