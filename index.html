@@ -305,6 +305,25 @@ button{
 }
 
 
+/* =========================
+   戻るボタン
+========================= */
+
+.back-btn{
+    width:100%;
+    background:#777;
+    color:white;
+    margin-top:0;
+    margin-bottom:24px;
+    padding:18px;
+    font-size:22px;
+}
+
+.back-btn:active{
+    transform:scale(0.98);
+}
+
+
 @media(max-width:500px){
 
     .inventory-label{
@@ -446,6 +465,22 @@ button{
 
 
 <!-- =========================
+     戻るボタン
+========================= -->
+
+<div class="card">
+
+<button
+    class="back-btn"
+    onclick="goBack()"
+>
+← 前の画面に戻る
+</button>
+
+</div>
+
+
+<!-- =========================
      選択中
 ========================= -->
 
@@ -525,6 +560,25 @@ let history =
 
 let selectedLabel = null;
 let selectedGender = "男";
+
+
+/* =========================
+   戻る
+========================= */
+
+function goBack(){
+
+    if(history.length > 0){
+
+        window.history.back();
+
+    }else{
+
+        window.location.href = "index.html";
+
+    }
+
+}
 
 
 /* =========================
@@ -771,7 +825,7 @@ function searchLabels(){
 
         /*
            完全一致がなければ
-           今まで通り部分一致
+           部分一致
         */
 
         filtered =
