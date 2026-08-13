@@ -104,7 +104,9 @@ button{
 }
 
 
-/* 男女選択 */
+/* =========================
+   男女選択
+========================= */
 
 .gender-area{
     display:flex;
@@ -125,7 +127,9 @@ button{
 }
 
 
-/* 検索 */
+/* =========================
+   検索
+========================= */
 
 .search-note{
     color:#777;
@@ -187,7 +191,9 @@ button{
 }
 
 
-/* 現在庫 */
+/* =========================
+   現在庫
+========================= */
 
 .inventory-toggle{
     width:100%;
@@ -252,7 +258,9 @@ button{
 }
 
 
-/* 履歴 */
+/* =========================
+   履歴
+========================= */
 
 .history-item{
     border-top:1px solid #ddd;
@@ -314,7 +322,7 @@ button{
     background:#777;
     color:white;
     margin-top:0;
-    margin-bottom:24px;
+    margin-bottom:0;
     padding:18px;
     font-size:22px;
 }
@@ -568,7 +576,25 @@ let selectedGender = "男";
 
 function goBack(){
 
-    window.history.back();
+    /*
+       前のページから来ている場合
+       前のページへ戻る
+    */
+
+    if(document.referrer){
+
+        window.history.back();
+
+    }else{
+
+        /*
+           直接このページを開いた場合は
+           index.htmlへ戻る
+        */
+
+        window.location.href = "index.html";
+
+    }
 
 }
 
