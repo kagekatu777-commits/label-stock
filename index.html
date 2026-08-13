@@ -78,15 +78,14 @@ button{
 .select-btn{
     background:#e8edf3;
     color:#222;
-    padding:15px 25px;
+    padding:15px 20px;
 }
 
 .delete-btn{
     background:#e53935;
     color:white;
-    padding:14px 20px;
-    margin-left:12px;
-    font-size:19px;
+    padding:12px 16px;
+    font-size:17px;
 }
 
 .message{
@@ -104,6 +103,30 @@ button{
     font-weight:bold;
 }
 
+
+/* 男女選択 */
+
+.gender-area{
+    display:flex;
+    gap:12px;
+    margin-bottom:20px;
+}
+
+.gender-btn{
+    flex:1;
+    background:#e8edf3;
+    color:#333;
+    padding:18px 10px;
+}
+
+.gender-btn.selected{
+    background:#1976d2;
+    color:white;
+}
+
+
+/* 検索 */
+
 .search-note{
     color:#777;
     font-size:18px;
@@ -116,6 +139,7 @@ button{
     display:flex;
     justify-content:space-between;
     align-items:center;
+    gap:10px;
 }
 
 .result-info{
@@ -125,15 +149,31 @@ button{
 .label-name{
     font-size:26px;
     font-weight:bold;
-    margin-bottom:8px;
+}
+
+.gender-name{
+    display:inline-block;
+    margin-top:6px;
+    padding:5px 12px;
+    border-radius:8px;
+    background:#eee;
+    font-size:18px;
+    font-weight:bold;
 }
 
 .stock{
     font-size:22px;
+    margin-top:6px;
 }
 
 .selected-name{
     font-size:30px;
+    font-weight:bold;
+}
+
+.selected-gender{
+    font-size:22px;
+    margin-top:5px;
     font-weight:bold;
 }
 
@@ -147,9 +187,7 @@ button{
 }
 
 
-/* =========================
-   現在庫一覧
-========================= */
+/* 現在庫 */
 
 .inventory-toggle{
     width:100%;
@@ -178,7 +216,16 @@ button{
 .inventory-label{
     font-size:25px;
     font-weight:bold;
-    word-break:break-all;
+}
+
+.inventory-gender{
+    display:inline-block;
+    margin-top:5px;
+    padding:5px 12px;
+    border-radius:8px;
+    background:#eee;
+    font-size:18px;
+    font-weight:bold;
 }
 
 .inventory-stock{
@@ -188,8 +235,6 @@ button{
 }
 
 .inventory-actions{
-    display:flex;
-    align-items:center;
     flex-shrink:0;
 }
 
@@ -207,9 +252,7 @@ button{
 }
 
 
-/* =========================
-   入出庫履歴
-========================= */
+/* 履歴 */
 
 .history-item{
     border-top:1px solid #ddd;
@@ -225,6 +268,12 @@ button{
 .history-label{
     font-size:22px;
     font-weight:bold;
+}
+
+.history-gender{
+    font-size:19px;
+    font-weight:bold;
+    margin-top:4px;
 }
 
 .history-count{
@@ -256,15 +305,7 @@ button{
 }
 
 
-/* =========================
-   スマホ用
-========================= */
-
 @media(max-width:500px){
-
-    .inventory-item{
-        align-items:center;
-    }
 
     .inventory-label{
         font-size:22px;
@@ -275,13 +316,11 @@ button{
     }
 
     .delete-btn{
-        padding:12px 15px;
-        font-size:17px;
-        margin-left:5px;
+        padding:11px 13px;
+        font-size:16px;
     }
 
 }
-
 </style>
 </head>
 
@@ -290,9 +329,7 @@ button{
 <h1>ラベル在庫管理</h1>
 
 
-<!-- =========================
-     ラベル登録
-========================= -->
+<!-- ラベル登録 -->
 
 <div class="card">
 
@@ -305,6 +342,30 @@ button{
     id="labelNumber"
     placeholder="例：25-1"
 >
+
+<label>区分</label>
+
+<div class="gender-area">
+
+<button
+    type="button"
+    class="gender-btn selected"
+    id="maleBtn"
+    onclick="selectGender('男')"
+>
+男
+</button>
+
+<button
+    type="button"
+    class="gender-btn"
+    id="femaleBtn"
+    onclick="selectGender('女')"
+>
+女
+</button>
+
+</div>
 
 <label>個数</label>
 
@@ -327,9 +388,7 @@ button{
 </div>
 
 
-<!-- =========================
-     ラベル検索
-========================= -->
+<!-- ラベル検索 -->
 
 <div class="card">
 
@@ -351,9 +410,7 @@ button{
 </div>
 
 
-<!-- =========================
-     現在庫一覧
-========================= -->
+<!-- 現在庫一覧 -->
 
 <div class="card">
 
@@ -380,9 +437,7 @@ button{
 </div>
 
 
-<!-- =========================
-     選択中のラベル
-========================= -->
+<!-- 選択中 -->
 
 <div class="card">
 
@@ -422,9 +477,7 @@ button{
 </div>
 
 
-<!-- =========================
-     入出庫履歴
-========================= -->
+<!-- 履歴 -->
 
 <div class="card">
 
@@ -445,18 +498,66 @@ button{
 <script>
 
 /* =========================
-   データ読み込み
+   データ
 ========================= */
 
-let labels = JSON.parse(
-    localStorage.getItem("labelInventory") || "{}"
-);
+let labels =
+    JSON.parse(
+        localStorage.getItem("labelInventory") || "{}"
+    );
 
-let history = JSON.parse(
-    localStorage.getItem("labelHistory") || "[]"
-);
+let history =
+    JSON.parse(
+        localStorage.getItem("labelHistory") || "[]"
+    );
 
 let selectedLabel = null;
+let selectedGender = "男";
+
+
+/* =========================
+   男女選択
+========================= */
+
+function selectGender(gender){
+
+    selectedGender = gender;
+
+    document
+        .getElementById("maleBtn")
+        .classList.remove("selected");
+
+    document
+        .getElementById("femaleBtn")
+        .classList.remove("selected");
+
+
+    if(gender === "男"){
+
+        document
+            .getElementById("maleBtn")
+            .classList.add("selected");
+
+    }else{
+
+        document
+            .getElementById("femaleBtn")
+            .classList.add("selected");
+
+    }
+
+}
+
+
+/* =========================
+   データキー
+========================= */
+
+function getKey(number, gender){
+
+    return number + "___" + gender;
+
+}
 
 
 /* =========================
@@ -470,7 +571,7 @@ function getDateTime(){
     return (
         now.getFullYear()
         + "/"
-        + String(now.getMonth() + 1).padStart(2,"0")
+        + String(now.getMonth()+1).padStart(2,"0")
         + "/"
         + String(now.getDate()).padStart(2,"0")
         + " "
@@ -483,7 +584,7 @@ function getDateTime(){
 
 
 /* =========================
-   ラベル登録
+   登録
 ========================= */
 
 function registerLabel(){
@@ -532,26 +633,28 @@ function registerLabel(){
     }
 
 
-    /* 在庫を追加 */
+    const key =
+        getKey(number, selectedGender);
 
-    if(labels[number]){
 
-        labels[number] += count;
+    if(labels[key]){
+
+        labels[key] += count;
 
     }else{
 
-        labels[number] = count;
+        labels[key] = count;
 
     }
 
-
-    /* 入庫履歴 */
 
     history.unshift({
 
         date:getDateTime(),
 
         label:number,
+
+        gender:selectedGender,
 
         type:"入庫",
 
@@ -565,6 +668,8 @@ function registerLabel(){
 
     message.textContent =
         number
+        + "・"
+        + selectedGender
         + " を "
         + count
         + "個 入庫しました。";
@@ -583,16 +688,14 @@ function registerLabel(){
 
 
     showInventory();
-
     showHistory();
-
     searchLabels();
 
 }
 
 
 /* =========================
-   ラベル検索
+   検索
 ========================= */
 
 function searchLabels(){
@@ -625,7 +728,13 @@ function searchLabels(){
     const filtered =
         keys.filter(function(key){
 
-            return key
+            const parts =
+                key.split("___");
+
+            const number =
+                parts[0];
+
+            return number
                 .toLowerCase()
                 .includes(
                     keyword.toLowerCase()
@@ -635,6 +744,15 @@ function searchLabels(){
 
 
     filtered.forEach(function(key){
+
+        const parts =
+            key.split("___");
+
+        const number =
+            parts[0];
+
+        const gender =
+            parts[1];
 
         const div =
             document.createElement("div");
@@ -648,7 +766,11 @@ function searchLabels(){
             <div class="result-info">
 
                 <div class="label-name">
-                    ${key}
+                    ${number}
+                </div>
+
+                <div class="gender-name">
+                    ${gender}
                 </div>
 
                 <div class="stock">
@@ -659,7 +781,7 @@ function searchLabels(){
 
             <button
                 class="select-btn"
-                onclick="selectLabel('${key}')"
+                onclick="selectLabel('${number}','${gender}')"
             >
                 選択
             </button>
@@ -718,6 +840,15 @@ function showInventory(){
 
     keys.forEach(function(key){
 
+        const parts =
+            key.split("___");
+
+        const number =
+            parts[0];
+
+        const gender =
+            parts[1];
+
         const stock =
             labels[key];
 
@@ -740,7 +871,11 @@ function showInventory(){
             <div class="inventory-info">
 
                 <div class="inventory-label">
-                    ラベル：${key}
+                    ラベル：${number}
+                </div>
+
+                <div class="inventory-gender">
+                    ${gender}
                 </div>
 
                 <div class="inventory-stock ${stockClass}">
@@ -753,7 +888,7 @@ function showInventory(){
 
                 <button
                     class="delete-btn"
-                    onclick="deleteLabel('${key}')"
+                    onclick="deleteLabel('${number}','${gender}')"
                 >
                     🗑️ 削除
                 </button>
@@ -774,11 +909,13 @@ function showInventory(){
    在庫削除
 ========================= */
 
-function deleteLabel(number){
+function deleteLabel(number, gender){
 
-    /* 本当に存在するか確認 */
+    const key =
+        getKey(number, gender);
 
-    if(!Object.prototype.hasOwnProperty.call(labels, number)){
+
+    if(!Object.prototype.hasOwnProperty.call(labels,key)){
 
         return;
 
@@ -786,15 +923,15 @@ function deleteLabel(number){
 
 
     const stock =
-        labels[number];
+        labels[key];
 
-
-    /* 削除確認 */
 
     const result =
         confirm(
             "ラベル「"
             + number
+            + "・"
+            + gender
             + "」を削除しますか？\n\n"
             + "現在庫："
             + stock
@@ -810,18 +947,13 @@ function deleteLabel(number){
     }
 
 
-    /* 在庫から削除 */
-
-    delete labels[number];
+    delete labels[key];
 
 
-    /*
-       削除したラベルが
-       現在選択中だった場合
-       選択状態も解除
-    */
-
-    if(selectedLabel === number){
+    if(
+        selectedLabel === number &&
+        selectedGender === gender
+    ){
 
         selectedLabel = null;
 
@@ -839,21 +971,12 @@ function deleteLabel(number){
     }
 
 
-    /* 保存 */
-
     saveData();
 
 
-    /* 画面更新 */
-
     showInventory();
-
     searchLabels();
 
-
-    /*
-       削除完了メッセージ
-    */
 
     const message =
         document.getElementById(
@@ -864,6 +987,8 @@ function deleteLabel(number){
     message.textContent =
         "ラベル「"
         + number
+        + "・"
+        + gender
         + "」を削除しました。";
 
     message.className =
@@ -873,7 +998,7 @@ function deleteLabel(number){
 
 
 /* =========================
-   現在庫一覧の開閉
+   一覧開閉
 ========================= */
 
 function toggleInventory(){
@@ -916,9 +1041,14 @@ function toggleInventory(){
    ラベル選択
 ========================= */
 
-function selectLabel(number){
+function selectLabel(number, gender){
 
     selectedLabel = number;
+    selectedGender = gender;
+
+
+    const key =
+        getKey(number,gender);
 
 
     const area =
@@ -933,10 +1063,14 @@ function selectLabel(number){
             ${number}
         </div>
 
+        <div class="selected-gender">
+            区分：${gender}
+        </div>
+
         <div class="selected-stock">
             現在庫：
             <strong>
-                ${labels[number]}個
+                ${labels[key]}個
             </strong>
         </div>
 
@@ -966,7 +1100,7 @@ function selectLabel(number){
 
 
 /* =========================
-   ラベル出庫
+   出庫
 ========================= */
 
 function useLabels(){
@@ -976,6 +1110,13 @@ function useLabels(){
         return;
 
     }
+
+
+    const key =
+        getKey(
+            selectedLabel,
+            selectedGender
+        );
 
 
     const count =
@@ -992,7 +1133,7 @@ function useLabels(){
 
 
     const currentStock =
-        labels[selectedLabel];
+        labels[key];
 
 
     if(!count || count <= 0){
@@ -1023,19 +1164,17 @@ function useLabels(){
     }
 
 
-    /* 在庫を減らす */
-
-    labels[selectedLabel] =
+    labels[key] =
         currentStock - count;
 
-
-    /* 出庫履歴 */
 
     history.unshift({
 
         date:getDateTime(),
 
         label:selectedLabel,
+
+        gender:selectedGender,
 
         type:"出庫",
 
@@ -1047,8 +1186,6 @@ function useLabels(){
     saveData();
 
 
-    /* 選択中ラベル更新 */
-
     document
         .getElementById("selectedLabel")
         .innerHTML = `
@@ -1057,10 +1194,14 @@ function useLabels(){
                 ${selectedLabel}
             </div>
 
+            <div class="selected-gender">
+                区分：${selectedGender}
+            </div>
+
             <div class="selected-stock">
                 現在庫：
                 <strong>
-                    ${labels[selectedLabel]}個
+                    ${labels[key]}個
                 </strong>
             </div>
 
@@ -1069,6 +1210,8 @@ function useLabels(){
 
     message.textContent =
         selectedLabel
+        + "・"
+        + selectedGender
         + " を "
         + count
         + "個 出庫しました。";
@@ -1084,16 +1227,14 @@ function useLabels(){
 
 
     showInventory();
-
     showHistory();
-
     searchLabels();
 
 }
 
 
 /* =========================
-   データ保存
+   保存
 ========================= */
 
 function saveData(){
@@ -1112,7 +1253,7 @@ function saveData(){
 
 
 /* =========================
-   入出庫履歴
+   履歴表示
 ========================= */
 
 function showHistory(){
@@ -1161,6 +1302,10 @@ function showHistory(){
                 ラベル：${item.label}
             </div>
 
+            <div class="history-gender">
+                区分：${item.gender || "男"}
+            </div>
+
             <div class="history-count ${typeClass}">
                 ${item.type}：${item.count}個
             </div>
@@ -1205,7 +1350,6 @@ function clearHistory(){
 
 
     saveData();
-
 
     showHistory();
 
