@@ -542,6 +542,7 @@ function registerLabel(){
 
 /* =========================
    ラベル検索
+   空欄のときは何も表示しない
 ========================= */
 
 function searchLabels(){
@@ -556,7 +557,20 @@ function searchLabels(){
         document
         .getElementById("searchResults");
 
+    /* 一度表示を空にする */
+
     results.innerHTML = "";
+
+
+    /*
+       検索欄が空なら終了。
+       これで最初の画面には
+       ラベル一覧が表示されません。
+    */
+
+    if(keyword === ""){
+        return;
+    }
 
 
     const keys =
@@ -610,6 +624,19 @@ function searchLabels(){
         results.appendChild(div);
 
     });
+
+
+    /* 該当するラベルがない場合 */
+
+    if(filtered.length === 0){
+
+        results.innerHTML = `
+            <div class="empty-inventory">
+                該当するラベルがありません。
+            </div>
+        `;
+
+    }
 
 }
 
@@ -754,273 +781,4 @@ function selectLabel(number){
 
     document
         .getElementById("useArea")
-        .classList.remove("hidden");
-
-
-    document
-        .getElementById("useCount")
-        .value = "";
-
-
-    document
-        .getElementById("useMessage")
-        .textContent = "";
-
-
-    document
-        .getElementById("useCount")
-        .focus();
-
-}
-
-
-/* =========================
-   ラベル出庫
-========================= */
-
-function useLabels(){
-
-    if(!selectedLabel){
-        return;
-    }
-
-
-    const count =
-        Number(
-            document
-            .getElementById("useCount")
-            .value
-        );
-
-
-    const message =
-        document
-        .getElementById("useMessage");
-
-
-    const currentStock =
-        labels[selectedLabel];
-
-
-    if(!count || count <= 0){
-
-        message.textContent =
-            "使用する個数を入力してください。";
-
-        message.className =
-            "message warning";
-
-        return;
-    }
-
-
-    if(count > currentStock){
-
-        message.textContent =
-            "在庫が足りません。現在庫は "
-            + currentStock
-            + "個です。";
-
-        message.className =
-            "message warning";
-
-        return;
-    }
-
-
-    /* 在庫を減らす */
-
-    labels[selectedLabel] =
-        currentStock - count;
-
-
-    /* 出庫履歴 */
-
-    history.unshift({
-
-        date:getDateTime(),
-
-        label:selectedLabel,
-
-        type:"出庫",
-
-        count:count
-
-    });
-
-
-    saveData();
-
-
-    /* 選択中ラベル更新 */
-
-    document
-        .getElementById("selectedLabel")
-        .innerHTML = `
-
-            <div class="selected-name">
-                ${selectedLabel}
-            </div>
-
-            <div class="selected-stock">
-                現在庫：
-                <strong>
-                    ${labels[selectedLabel]}個
-                </strong>
-            </div>
-
-        `;
-
-
-    message.textContent =
-        selectedLabel
-        + " を "
-        + count
-        + "個 出庫しました。";
-
-
-    message.className =
-        "message success";
-
-
-    document
-        .getElementById("useCount")
-        .value = "";
-
-
-    searchLabels();
-
-    showInventory();
-
-    showHistory();
-
-}
-
-
-/* =========================
-   データ保存
-========================= */
-
-function saveData(){
-
-    localStorage.setItem(
-        "labelInventory",
-        JSON.stringify(labels)
-    );
-
-    localStorage.setItem(
-        "labelHistory",
-        JSON.stringify(history)
-    );
-
-}
-
-
-/* =========================
-   入出庫履歴表示
-========================= */
-
-function showHistory(){
-
-    const list =
-        document.getElementById(
-            "historyList"
-        );
-
-
-    list.innerHTML = "";
-
-
-    if(history.length === 0){
-
-        list.innerHTML =
-            '<div class="empty-history">入出庫履歴はありません。</div>';
-
-        return;
-    }
-
-
-    history.forEach(function(item){
-
-        const div =
-            document.createElement("div");
-
-        div.className =
-            "history-item";
-
-
-        const typeClass =
-            item.type === "入庫"
-            ? "history-in"
-            : "history-out";
-
-
-        div.innerHTML = `
-
-            <div class="history-date">
-                ${item.date}
-            </div>
-
-            <div class="history-label">
-                ラベル：${item.label}
-            </div>
-
-            <div class="history-count ${typeClass}">
-                ${item.type}：${item.count}個
-            </div>
-
-        `;
-
-
-        list.appendChild(div);
-
-    });
-
-}
-
-
-/* =========================
-   履歴削除
-========================= */
-
-function clearHistory(){
-
-    if(history.length === 0){
-        return;
-    }
-
-
-    const result =
-        confirm(
-            "入出庫履歴をすべて削除しますか？"
-        );
-
-
-    if(!result){
-        return;
-    }
-
-
-    history = [];
-
-    saveData();
-
-    showHistory();
-
-}
-
-
-/* =========================
-   起動時
-========================= */
-
-searchLabels();
-
-showInventory();
-
-showHistory();
-
-</script>
-
-</body>
-</html>
+       
