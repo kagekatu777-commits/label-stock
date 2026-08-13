@@ -378,3 +378,699 @@ button{
 ========================= -->
 
 <div class="card">
+
+<h2>入出庫履歴</h2>
+
+<div id="historyList"></div>
+
+<button
+    class="clear-history"
+    onclick="clearHistory()"
+>
+履歴をすべて削除
+</button>
+
+</div>
+
+
+<script>
+
+/* =========================
+   データ読み込み
+========================= */
+
+let labels = JSON.parse(
+    localStorage.getItem("labelInventory") || "{}"
+);
+
+let history = JSON.parse(
+    localStorage.getItem("labelHistory") || "[]"
+);
+
+let selectedLabel = null;
+
+
+/* =========================
+   日時
+========================= */
+
+function getDateTime(){
+
+    const now = new Date();
+
+    return (
+        now.getFullYear()
+        + "/"
+        + String(now.getMonth() + 1).padStart(2,"0")
+        + "/"
+        + String(now.getDate()).padStart(2,"0")
+        + " "
+        + String(now.getHours()).padStart(2,"0")
+        + ":"
+        + String(now.getMinutes()).padStart(2,"0")
+    );
+
+}
+
+
+/* =========================
+   ラベル登録
+========================= */
+
+function registerLabel(){
+
+    const number =
+        document
+        .getElementById("labelNumber")
+        .value
+        .trim();
+
+    const count =
+        Number(
+            document
+            .getElementById("labelCount")
+            .value
+        );
+
+    const message =
+        document
+        .getElementById("registerMessage");
+
+
+    if(!number){
+
+        message.textContent =
+            "ラベル番号を入力してください。";
+
+        message.className =
+            "message warning";
+
+        return;
+
+    }
+
+
+    if(!count || count <= 0){
+
+        message.textContent =
+            "個数を入力してください。";
+
+        message.className =
+            "message warning";
+
+        return;
+
+    }
+
+
+    /* 在庫を追加 */
+
+    if(labels[number]){
+
+        labels[number] += count;
+
+    }else{
+
+        labels[number] = count;
+
+    }
+
+
+    /* 入庫履歴 */
+
+    history.unshift({
+
+        date:getDateTime(),
+
+        label:number,
+
+        type:"入庫",
+
+        count:count
+
+    });
+
+
+    saveData();
+
+
+    message.textContent =
+        number
+        + " を "
+        + count
+        + "個 入庫しました。";
+
+    message.className =
+        "message success";
+
+
+    document
+        .getElementById("labelNumber")
+        .value = "";
+
+    document
+        .getElementById("labelCount")
+        .value = "";
+
+
+    showInventory();
+
+    showHistory();
+
+    searchLabels();
+
+}
+
+
+/* =========================
+   ラベル検索
+========================= */
+
+function searchLabels(){
+
+    const keyword =
+        document
+        .getElementById("searchInput")
+        .value
+        .trim();
+
+    const results =
+        document
+        .getElementById("searchResults");
+
+
+    /* 一旦クリア */
+
+    results.innerHTML = "";
+
+
+    /*
+       検索欄が空なら
+       ラベルを一切表示しない
+    */
+
+    if(keyword === ""){
+
+        return;
+
+    }
+
+
+    const keys =
+        Object.keys(labels);
+
+
+    const filtered =
+        keys.filter(function(key){
+
+            return key
+                .toLowerCase()
+                .includes(
+                    keyword.toLowerCase()
+                );
+
+        });
+
+
+    filtered.forEach(function(key){
+
+        const div =
+            document.createElement("div");
+
+        div.className =
+            "result";
+
+
+        div.innerHTML = `
+
+            <div class="result-info">
+
+                <div class="label-name">
+                    ${key}
+                </div>
+
+                <div class="stock">
+                    在庫：${labels[key]}個
+                </div>
+
+            </div>
+
+            <button
+                class="select-btn"
+                onclick="selectLabel('${key}')"
+            >
+                選択
+            </button>
+
+        `;
+
+
+        results.appendChild(div);
+
+    });
+
+
+    /* 該当なし */
+
+    if(filtered.length === 0){
+
+        results.innerHTML = `
+
+            <div class="empty-inventory">
+                該当するラベルがありません。
+            </div>
+
+        `;
+
+    }
+
+}
+
+
+/* =========================
+   現在庫一覧
+========================= */
+
+function showInventory(){
+
+    const list =
+        document.getElementById(
+            "inventoryList"
+        );
+
+
+    list.innerHTML = "";
+
+
+    const keys =
+        Object.keys(labels);
+
+
+    if(keys.length === 0){
+
+        list.innerHTML =
+            '<div class="empty-inventory">登録されているラベルはありません。</div>';
+
+        return;
+
+    }
+
+
+    keys.forEach(function(key){
+
+        const stock =
+            labels[key];
+
+
+        const div =
+            document.createElement("div");
+
+        div.className =
+            "inventory-item";
+
+
+        const stockClass =
+            stock === 0
+            ? "stock-zero"
+            : "stock-ok";
+
+
+        div.innerHTML = `
+
+            <div class="inventory-label">
+                ラベル：${key}
+            </div>
+
+            <div class="inventory-stock ${stockClass}">
+                ${stock}個
+            </div>
+
+        `;
+
+
+        list.appendChild(div);
+
+    });
+
+}
+
+
+/* =========================
+   現在庫一覧の開閉
+========================= */
+
+function toggleInventory(){
+
+    const area =
+        document.getElementById(
+            "inventoryArea"
+        );
+
+    const button =
+        document.getElementById(
+            "inventoryButton"
+        );
+
+
+    if(area.classList.contains("hidden")){
+
+        area.classList.remove("hidden");
+
+        button.classList.add("open");
+
+        button.textContent =
+            "📦 現在庫一覧を閉じる";
+
+    }else{
+
+        area.classList.add("hidden");
+
+        button.classList.remove("open");
+
+        button.textContent =
+            "📦 現在庫一覧を見る";
+
+    }
+
+}
+
+
+/* =========================
+   ラベル選択
+========================= */
+
+function selectLabel(number){
+
+    selectedLabel = number;
+
+
+    const area =
+        document.getElementById(
+            "selectedLabel"
+        );
+
+
+    area.innerHTML = `
+
+        <div class="selected-name">
+            ${number}
+        </div>
+
+        <div class="selected-stock">
+            現在庫：
+            <strong>
+                ${labels[number]}個
+            </strong>
+        </div>
+
+    `;
+
+
+    document
+        .getElementById("useArea")
+        .classList.remove("hidden");
+
+
+    document
+        .getElementById("useCount")
+        .value = "";
+
+
+    document
+        .getElementById("useMessage")
+        .textContent = "";
+
+
+    document
+        .getElementById("useCount")
+        .focus();
+
+}
+
+
+/* =========================
+   ラベル出庫
+========================= */
+
+function useLabels(){
+
+    if(!selectedLabel){
+
+        return;
+
+    }
+
+
+    const count =
+        Number(
+            document
+            .getElementById("useCount")
+            .value
+        );
+
+
+    const message =
+        document
+        .getElementById("useMessage");
+
+
+    const currentStock =
+        labels[selectedLabel];
+
+
+    if(!count || count <= 0){
+
+        message.textContent =
+            "使用する個数を入力してください。";
+
+        message.className =
+            "message warning";
+
+        return;
+
+    }
+
+
+    if(count > currentStock){
+
+        message.textContent =
+            "在庫が足りません。現在庫は "
+            + currentStock
+            + "個です。";
+
+        message.className =
+            "message warning";
+
+        return;
+
+    }
+
+
+    /* 在庫を減らす */
+
+    labels[selectedLabel] =
+        currentStock - count;
+
+
+    /* 出庫履歴 */
+
+    history.unshift({
+
+        date:getDateTime(),
+
+        label:selectedLabel,
+
+        type:"出庫",
+
+        count:count
+
+    });
+
+
+    saveData();
+
+
+    /* 選択中ラベル更新 */
+
+    document
+        .getElementById("selectedLabel")
+        .innerHTML = `
+
+            <div class="selected-name">
+                ${selectedLabel}
+            </div>
+
+            <div class="selected-stock">
+                現在庫：
+                <strong>
+                    ${labels[selectedLabel]}個
+                </strong>
+            </div>
+
+        `;
+
+
+    message.textContent =
+        selectedLabel
+        + " を "
+        + count
+        + "個 出庫しました。";
+
+
+    message.className =
+        "message success";
+
+
+    document
+        .getElementById("useCount")
+        .value = "";
+
+
+    showInventory();
+
+    showHistory();
+
+    searchLabels();
+
+}
+
+
+/* =========================
+   データ保存
+========================= */
+
+function saveData(){
+
+    localStorage.setItem(
+        "labelInventory",
+        JSON.stringify(labels)
+    );
+
+    localStorage.setItem(
+        "labelHistory",
+        JSON.stringify(history)
+    );
+
+}
+
+
+/* =========================
+   入出庫履歴
+========================= */
+
+function showHistory(){
+
+    const list =
+        document.getElementById(
+            "historyList"
+        );
+
+
+    list.innerHTML = "";
+
+
+    if(history.length === 0){
+
+        list.innerHTML =
+            '<div class="empty-history">入出庫履歴はありません。</div>';
+
+        return;
+
+    }
+
+
+    history.forEach(function(item){
+
+        const div =
+            document.createElement("div");
+
+        div.className =
+            "history-item";
+
+
+        const typeClass =
+            item.type === "入庫"
+            ? "history-in"
+            : "history-out";
+
+
+        div.innerHTML = `
+
+            <div class="history-date">
+                ${item.date}
+            </div>
+
+            <div class="history-label">
+                ラベル：${item.label}
+            </div>
+
+            <div class="history-count ${typeClass}">
+                ${item.type}：${item.count}個
+            </div>
+
+        `;
+
+
+        list.appendChild(div);
+
+    });
+
+}
+
+
+/* =========================
+   履歴削除
+========================= */
+
+function clearHistory(){
+
+    if(history.length === 0){
+
+        return;
+
+    }
+
+
+    const result =
+        confirm(
+            "入出庫履歴をすべて削除しますか？"
+        );
+
+
+    if(!result){
+
+        return;
+
+    }
+
+
+    history = [];
+
+
+    saveData();
+
+
+    showHistory();
+
+}
+
+
+/* =========================
+   起動時
+========================= */
+
+/*
+   searchLabels() は
+   検索欄が空なら何も表示しない。
+*/
+
+searchLabels();
+
+showInventory();
+
+showHistory();
+
+</script>
+
+</body>
+</html>
